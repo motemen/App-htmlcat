@@ -1,0 +1,6 @@
+#!/usr/bin/env perl
+use strict;
+use warnings;
+use App::htmlcat;
+
+App::htmlcat->new(@ARGV)->run;
