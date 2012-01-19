@@ -3,8 +3,8 @@ use strict;
 use warnings;
 use AnyEvent::Handle;
 use HTML::FromANSI::Tiny;
+use HTML::Entities;
 use Data::Section::Simple qw(get_data_section);
-use List::MoreUtils qw(any);
 use Plack::Runner;
 
 our $VERSION = '0.01';
@@ -13,48 +13,61 @@ sub new {
     my ($class, @args) = @_;
 
     my $self = bless {
-        args => \@args,
+        args    => \@args,
         clients => {},
-        ansi => HTML::FromANSI::Tiny->new(
+        ansi    => HTML::FromANSI::Tiny->new(
             auto_reverse  => 1,
             no_plain_tags => 1,
+            html_encode   => sub { encode_entities($_[0], q("&<>)) },
         ),
     }, $class;
 
     $self->{in} = AnyEvent::Handle->new(
         fh => \*STDIN,
-        on_read => sub {
-            my $handle = shift;
-            $handle->push_read(line => sub {
-                my ($handle, $line) = @_;
-                foreach (keys %{ $self->{clients} }) {
-                    my $client = $self->{clients}->{$_};
-                    if ($client->{handle}->destroyed) {
-                        delete $self->{clients}->{$_};
-                        next;
-                    }
-                    $self->push_line($client->{handle}, "$line\n");
-                }
-            }) if any { not $_->{handle}->destroyed } values %{ $self->{clients} };
+        on_eof => sub {
+            my ($handle) = @_;
+            exit 0;
         },
         on_error => sub {
             my ($handle, $fatal, $message) = @_;
-            $self->{left} = $handle->rbuf;
             warn "stdin: $message\n";
+            $self->broadcast($_[0]{rbuf});
+            exit 1;
         }
     );
 
     return $self;
 }
 
+sub on_read {
+    my $self = shift;
+
+    return sub {
+        my ($handle) = @_;
+        $self->broadcast($handle->rbuf);
+        $handle->rbuf = '';
+    };
+}
+
+sub broadcast {
+    my ($self, $data) = @_;
+
+    open my $fh, '<:utf8', \$self->{in}->rbuf;
+    while (<$fh>) {
+        foreach my $client (values %{ $self->{clients} }){ 
+            $self->push_line($client->{handle}, $_);
+        }
+    }
+}
+
 sub boundary {
     my $self = shift;
-    return $self->{boundary} ||= join '', 'htmlcat', $$, time;
+    return $self->{boundary} ||= join '_', 'htmlcat', $$, time;
 }
 
 sub push_line {
     my ($self, $handle, $line) = @_;
-    $handle->push_write("Content-Type: application/json\n\n");
+    $handle->push_write("Content-Type: application/json; charset=utf-8\n\n");
     $handle->push_write(json => { html => scalar $self->{ansi}->html($line) });
     $handle->push_write('--' . $self->boundary . "\n");
 }
@@ -75,7 +88,7 @@ sub as_psgi {
 
                 my $writer = $respond->([
                     200,
-                    [ 'Content-Type' => sprintf 'multipart/mixed; boundary="%s"', $self->boundary ]
+                    [ 'Content-Type' => sprintf 'multipart/mixed; charset=utf-8; boundary="%s"', $self->boundary ]
                 ]);
                 $writer->write('--' . $self->boundary . "\n");
 
@@ -85,27 +98,23 @@ sub as_psgi {
                     on_error => sub {
                         my ($handle, $fatal, $message) = @_;
                         warn "client [$remote_addr]: $message\n";
+                        delete $self->{clients}->{ 0+$io };
+                        if (keys %{$self->{clients}} == 0) {
+                            $self->{in}->on_read();
+                        }
                     }
                 );
 
-                if ($self->{in}->destroyed) {
-                    if (defined $self->{left}) {
-                        while ($self->{left} =~ s/^([^\n]*\n?)// && length $1) {
-                            $self->push_line($handle, $1);
-                        }
-                        delete $self->{left};
-                    }
-                } else {
-                    $self->{clients}->{ 0+$io } = {
-                        handle => $handle,
-                        writer => $writer, # keep reference
-                    };
-                }
+                $self->{clients}->{ 0+$io } = {
+                    handle => $handle,
+                    writer => $writer, # keep reference
+                };
+                $self->{in}->on_read($self->on_read);
             };
         } elsif ($env->{PATH_INFO} eq '/css') {
             return [ 200, [ 'Content-Type' => 'text/css' ], [ $self->{ansi}->css ] ];
         } elsif ($env->{PATH_INFO} eq '/') {
-            return [ 200, [ 'Content-Type' => 'text/html' ], [ get_data_section('html') ] ];
+            return [ 200, [ 'Content-Type' => 'text/html; charset=utf-8' ], [ get_data_section('html') ] ];
         } else {
             return [ 404, [], [] ];
         }
