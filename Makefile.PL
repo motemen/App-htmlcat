@@ -5,8 +5,9 @@ all_from 'lib/App/htmlcat.pm';
 
 requires 'AnyEvent::Handle';
 requires 'HTML::FromANSI::Tiny';
+requires 'HTML::Entities';
 requires 'Data::Section::Simple';
-requires 'List::MoreUtils';
+requires 'IO::Socket::INET';
 requires 'Plack::Runner';
 
 tests 't/*.t';
