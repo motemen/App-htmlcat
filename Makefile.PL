@@ -9,6 +9,7 @@ requires 'HTML::Entities';
 requires 'Data::Section::Simple';
 requires 'IO::Socket::INET';
 requires 'Plack::Runner';
+requires 'Twiggy';
 
 tests 't/*.t';
 author_tests 'xt';
