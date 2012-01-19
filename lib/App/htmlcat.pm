@@ -5,6 +5,7 @@ use AnyEvent::Handle;
 use HTML::FromANSI::Tiny;
 use HTML::Entities;
 use Data::Section::Simple qw(get_data_section);
+use IO::Socket::INET;
 use Plack::Runner;
 
 our $VERSION = '0.01';
@@ -124,7 +125,11 @@ sub as_psgi {
 sub run {
     my $self = shift;
     my $runner = Plack::Runner->new(app => $self->as_psgi);
-    $runner->parse_options('--env', 'production', @{ $self->{args} });
+    $runner->parse_options(
+        '--env' => 'production',
+        '--port' => empty_port(),
+        @{ $self->{args} }
+    );
 
     if (my $exec = { @{$runner->{options}} }->{exec}) {
         push @{ $runner->{options} }, server_ready => sub {
@@ -133,11 +138,37 @@ sub run {
             my $proto = $args->{proto} || 'http';
             system "$exec $proto://$host:$args->{port}/";
         };
+    } else {
+        push @{ $runner->{options} }, server_ready => sub {
+            my ($args) = @_;
+            my $host  = $args->{host} || 'localhost';
+            my $proto = $args->{proto} || 'http';
+            print STDERR "$0: $proto://$host:$args->{port}/\n";
+        };
     }
 
     $runner->run;
 }
 
+sub empty_port {
+    my $port = $ENV{HTTPCAT_PORT} || 45192 + int(rand() * 1000);
+
+    while ($port++ < 60000) {
+        my $remote = IO::Socket::INET->new(
+            Proto    => 'tcp',
+            PeerAddr => '127.0.0.1',
+            PeerPort => $port,
+        );
+
+        if ($remote) {
+            close $remote;
+        } else {
+            return $port;
+        }
+    }
+
+    die 'Could not find empty port';
+}
 __DATA__
 
 @@ html
