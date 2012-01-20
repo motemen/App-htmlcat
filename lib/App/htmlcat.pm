@@ -54,10 +54,11 @@ sub on_read {
 sub broadcast {
     my ($self, $data) = @_;
 
-    open my $fh, '<:utf8', \$self->{in}->rbuf;
-    while (<$fh>) {
+    open my $fh, '<', \$self->{in}->rbuf;
+    while (defined (my $line = <$fh>)) {
+        $line = decode_utf8 $line;
         foreach my $client (values %{ $self->{clients} }){ 
-            $self->push_line($client->{handle}, $_);
+            $self->push_line($client->{handle}, $line);
         }
     }
 }
