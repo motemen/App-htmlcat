@@ -66,7 +66,7 @@ sub broadcast {
 sub push_line {
     my ($self, $handle, $line) = @_;
     $handle->push_write("data:" . Encode::encode("utf-8", scalar $self->{ansi}->html($line) ) );
-	$handle->push_write("\n");
+    $handle->push_write("\n");
 }
 
 sub as_psgi {
@@ -84,10 +84,10 @@ sub as_psgi {
                 my $remote_addr = $env->{REMOTE_ADDR};
 
                 my $writer = $respond->([
-                    200,
-                    [ 'Content-Type' => 'text/event-stream; charset=utf-8',
-					  'Cache-Control' => 'no-cache'
-					]
+                    200, [
+                        'Content-Type' => 'text/event-stream; charset=utf-8',
+                        'Cache-Control' => 'no-cache'
+                    ]
                 ]);
 
                 my $io = $env->{'psgix.io'};
@@ -180,10 +180,9 @@ __DATA__
 <script type="text/javascript">
 window.onload = function () {
     var es = new EventSource("/stream");
-	es.onmessage = function(event) {
-		var data = {};
-		// alert(event.data);
-		data.html = event.data;
+    es.onmessage = function(event) {
+        var data = {};
+        data.html = event.data;
         if (!data.html) {
             return;
         }
