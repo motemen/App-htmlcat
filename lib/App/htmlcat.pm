@@ -33,7 +33,7 @@ sub new {
         on_error => sub {
             my ($handle, $fatal, $message) = @_;
             warn "stdin: $message\n";
-            $self->broadcast($_[0]{rbuf});
+            $self->_broadcast($_[0]{rbuf});
             exit 1;
         }
     );
@@ -41,29 +41,29 @@ sub new {
     return $self;
 }
 
-sub on_read {
+sub _on_read_cb {
     my $self = shift;
 
     return sub {
         my ($handle) = @_;
-        $self->broadcast($handle->rbuf);
+        $self->_broadcast($handle->rbuf);
         $handle->rbuf = '';
     };
 }
 
-sub broadcast {
+sub _broadcast {
     my ($self, $data) = @_;
 
     open my $fh, '<', \$self->{in}->rbuf;
     while (defined (my $line = <$fh>)) {
         $line = decode_utf8 $line;
         foreach my $client (values %{ $self->{clients} }){ 
-            $self->push_line($client->{handle}, $line);
+            $self->_push_line($client->{handle}, $line);
         }
     }
 }
 
-sub push_line {
+sub _push_line {
     my ($self, $handle, $line) = @_;
     $handle->push_write("data:" . Encode::encode("utf-8", scalar $self->{ansi}->html($line) ) );
     $handle->push_write("\n");
@@ -107,7 +107,7 @@ sub as_psgi {
                     handle => $handle,
                     writer => $writer, # keep reference
                 };
-                $self->{in}->on_read($self->on_read);
+                $self->{in}->on_read($self->_on_read_cb);
             };
         } elsif ($env->{PATH_INFO} eq '/css') {
             return [ 200, [ 'Content-Type' => 'text/css' ], [ $self->{ansi}->css ] ];
@@ -126,7 +126,7 @@ sub run {
     my $runner = Plack::Runner->new(app => $self->as_psgi);
     $runner->parse_options(
         '--env' => 'production',
-        '--port' => empty_port(),
+        '--port' => _empty_port(),
         @{ $self->{args} }
     );
 
@@ -149,7 +149,7 @@ sub run {
     $runner->run;
 }
 
-sub empty_port {
+sub _empty_port {
     my $port = $ENV{HTTPCAT_PORT} || 45192 + int(rand() * 1000);
 
     while ($port++ < 60000) {
