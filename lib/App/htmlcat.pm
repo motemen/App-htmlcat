@@ -220,15 +220,27 @@ __END__
 
 =head1 NAME
 
-App::htmlcat -
+App::htmlcat - stdin to your browser
 
-=head1 SYNOPSIS
+=head1 METHODS
 
-  use App::htmlcat;
+=over 4
 
-=head1 DESCRIPTION
+=item new
 
-App::htmlcat is
+=item on_read
+
+=item broadcast
+
+=item push_line
+
+=item as_psgi
+
+=item run
+
+=item empty_port
+
+=back
 
 =head1 AUTHOR
 
