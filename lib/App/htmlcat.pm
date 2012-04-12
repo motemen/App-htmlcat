@@ -229,7 +229,10 @@ App::htmlcat - stdin to your browser
 
 =item my $htmlcat = App::htmlcat->new(@ARGV)
 
-Creates an instance. Currently only C<--exec> option is meaningful.
+Creates an instance.
+
+As of I<@ARGV>, currently only C<--exec> option is handled
+by C<htmlcat>, all others are sent to L<Plack::Runner>.
 
 =item $htmlcat->as_psgi
 

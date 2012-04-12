@@ -17,7 +17,9 @@ htmlcat - stdin to your browser
 
 =head1 DESCRIPTION
 
-htmlcat shows stdin in HTML, by establishing a temporary HTTP server.
+C<htmlcat> renders stdin in HTML, by establishing a temporary HTTP server.
+
+Requires modern browser that recognize Server-Sent Events <http://dev.w3.org/html5/eventsource/>.
 
 =head1 FEATURES
 
@@ -37,8 +39,13 @@ htmlcat shows stdin in HTML, by establishing a temporary HTTP server.
 
 =item --exec=I<command>
 
-Invokes I<command> with the URL htmlcat listens as the only argument.
+Invokes I<command> with the URL C<htmlcat> listens as the only argument.
 Typically a command which opens a browser would be useful.
+
+=item --host=I<host>, --port=I<port>
+
+Specifies the host or port to listen. Actually they are
+handlerd by L<Plack::Runner>, so C<htmlcat> does nothing with them.
 
 =back
 
@@ -48,7 +55,7 @@ motemen E<lt>motemen@gmail.comE<gt>
 
 =head1 THANKS TO
 
-mala
+mala, for Server-sent events implementation
 
 =head1 LICENSE
 
