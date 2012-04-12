@@ -8,3 +8,4 @@ __DATA__
 motemen
 motemen@gmail.com
 App::htmlcat
+stdin
