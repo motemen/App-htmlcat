@@ -19,3 +19,5 @@
 ^\.shipit$
 ^\.git/
 \.sw[po]$
+Debian_CPANTS.txt
+.prove
