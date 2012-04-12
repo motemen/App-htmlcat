@@ -54,7 +54,7 @@ sub _on_read_cb {
 sub _broadcast {
     my ($self, $data) = @_;
 
-    open my $fh, '<', \$self->{in}->rbuf;
+    open my $fh, '<', \$data;
     while (defined (my $line = <$fh>)) {
         $line = decode_utf8 $line;
         foreach my $client (values %{ $self->{clients} }){ 
@@ -149,6 +149,7 @@ sub run {
     $runner->run;
 }
 
+# from Test::TCP
 sub _empty_port {
     my $port = $ENV{HTTPCAT_PORT} || 45192 + int(rand() * 1000);
 
@@ -226,17 +227,17 @@ App::htmlcat - stdin to your browser
 
 =over 4
 
-=item new
+=item my $htmlcat = App::htmlcat->new(@ARGV)
 
-=item on_read
+Creates an instance. Currently only C<--exec> option is meaningful.
 
-=item broadcast
+=item $htmlcat->as_psgi
 
-=item push_line
+Returns the htmlcat PSGI app.
 
-=item as_psgi
+=item $htmlcat->run
 
-=item run
+Does plackup internally and runs htmlcat.
 
 =item empty_port
 
@@ -245,8 +246,6 @@ App::htmlcat - stdin to your browser
 =head1 AUTHOR
 
 motemen E<lt>motemen@gmail.comE<gt>
-
-=head1 SEE ALSO
 
 =head1 LICENSE
 
