@@ -11,3 +11,5 @@ MANIFEST.bak
 *.sw[po]
 MYMETA.json
 MYMETA.yml
+.prove
+Debian_CPANTS.txt
