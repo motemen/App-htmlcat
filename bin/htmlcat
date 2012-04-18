@@ -45,7 +45,7 @@ Typically a command which opens a browser would be useful.
 =item --host=I<host>, --port=I<port>
 
 Specifies the host or port to listen. Actually they are
-handlerd by L<Plack::Runner>, so C<htmlcat> does nothing with them.
+handled by L<Plack::Runner>, so C<htmlcat> does nothing with them.
 
 =back
 
