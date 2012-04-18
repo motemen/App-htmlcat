@@ -1,6 +1,7 @@
 package App::htmlcat;
 use strict;
 use warnings;
+use 5.008_001;
 use AnyEvent::Handle;
 use HTML::FromANSI::Tiny;
 use HTML::Entities;
