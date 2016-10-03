@@ -10,7 +10,7 @@ htmlcat - stdin to your browser
 
 `htmlcat` renders stdin in HTML, by establishing a temporary HTTP server.
 
-Requires modern browser that recognize [Server-Sent Events](http://dev.w3.org/html5/eventsource/).
+Requires modern browser that recognize [Server-Sent Events](https://html.spec.whatwg.org/multipage/comms.html#server-sent-events).
 
 # FEATURES
 
